@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ansible/ansible-lint/refs/heads/main/src/ansiblelint/schemas/tasks.json
+---
+- name: Ensure tgsmtp script exists
+  ansible.builtin.get_url:
+    url: "{{ tgsmtp_script_url }}"
+    dest: "{{ tgsmtp_install_path }}"
+    owner: root
+    group: root
+    mode: "0755"
+    checksum: "{{ tgsmtp_script_hash }}"
+
+- name: Ensure sendmail wrapper exists
+  ansible.builtin.template:
+    src: sendmail.j2
+    dest: "{{ tgsmtp_alias_path }}"
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Ensure logrotate config exists
+  when: tgsmtp_logrotate_install
+  ansible.builtin.template:
+    src: logrotate.j2
+    dest: /etc/logrotate.d/tgsmtp
+    owner: root
+    group: root
+    mode: "0644"

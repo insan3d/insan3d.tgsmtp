@@ -1,0 +1,72 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/role-arg-spec.json
+---
+argument_specs:
+  main:
+    short_description: Setups sendmail to Telegram wrapper script.
+    author:
+      - Alexander Pozlevich <apozlevich@gmail.com>
+
+    description:
+      - Setups C(tgsmtp) as C(sendmail) alias.
+
+      - C(tgsmtp) is a simple script which parses standard input as email and
+        sends message to Telegram group.
+
+    seealso:
+      - name: Repo
+        description: GitHub repository
+        link: https://github.com/insan3d/insan3d.tgsmtp
+
+      - name: script
+        description: Main script repository
+        link: https://github.com/insan3d/tgsmtp
+
+    options:
+      tgsmtp_telegtam_token:
+        type: str
+        required: true
+        description: Telegram bot token.
+
+      tgsmtp_telegtam_chat_id:
+        type: str
+        required: true
+        description: Telegram (group) chat ID.
+
+      tgsmtp_format:
+        default: pre
+        choices:
+          - pre
+          - html
+          - markdownv2
+
+        description: Choose Telegram markup parsing mode.
+
+      tgsmtp_install_path:
+        type: path
+        default: /usr/local/bin/tgsmtp
+        description: Path to install script to.
+
+      tgsmtp_alias_path:
+        type: path
+        default: /usr/sbin/sendmail
+        description: Path to install C(sendmail) alias script to.
+
+      tgsmtp_alias_unicode:
+        type: bool
+        default: false
+        description: Parse Unicode escapes in input or no.
+
+      tgsmtp_python_executable:
+        type: path
+        default: /usr/bin/python3
+        description: Python executable to use.
+
+      tgsmtp_log_path:
+        type: path
+        default: /var/log/tgsmtp.log
+        description: The logfile path.
+
+      tgsmtp_logrotate_install:
+        type: bool
+        default: true
+        description: If set to C(true), C(logrotate) config will be installed also.

@@ -1,0 +1,8 @@
+{{ tgsmtp_log_path }}{% raw %} {
+    weekly
+    rotate 4
+    compress
+    missingok
+    notifempty
+    create 0644 root root
+}{% endraw %}

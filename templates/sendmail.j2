@@ -1,0 +1,25 @@
+#! /usr/bin/env bash
+
+TG_TOKEN="{{ tgsmtp_telegtam_token }}"
+TG_CHAT_ID="{{ tgsmtp_telegtam_chat_id }}"
+TG_FORMAT="{{ tgsmtp_format | default('pre') }}"
+TG_UNICODE="{{ '--unicode' if tgsmtp_alias_unicode else ''}}"
+PYTHON_BIN="{{ tgsmtp_python_executable }}"
+SCRIPT_PATH="{{ tgsmtp_install_path }}"
+LOG_PATH="{{ tgsmtp_log_path }}"
+
+SENDER=""
+while getparse=$#; ((getparse > 0)); do
+    case "$1" in
+        -f) SENDER="$2"; shift 2 ;;
+        -t|-oi|-oem|-bm) shift 1 ;;
+        *) shift 1 ;;
+    esac
+done
+
+$PYTHON_BIN "$SCRIPT_PATH" \
+    --token "$TG_TOKEN" \
+    --chat "$TG_CHAT_ID" \
+    --format "$TG_FORMAT" \
+    ${SENDER:+--sender "$SENDER"} ${TG_UNICODE} \
+    --verbose >> "$LOG_PATH" 2>&1

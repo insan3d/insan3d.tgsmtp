@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/meta.json
+---
+galaxy_info:
+  namespace: insan3d
+  role_name: tgsmtp
+  author: Alexander Pozlevich
+  license: MIT
+
+  min_ansible_version: "2.20"
+  platforms: [{name: GenericLinux}]
+
+  description:
+    - Setups C(tgsmtp) as C(sendmail) alias.
+
+    - C(tgsmtp) is a simple script which parses standard input as email and
+      sends message to Telegram group.
