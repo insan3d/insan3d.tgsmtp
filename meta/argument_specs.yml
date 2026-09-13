@@ -22,15 +22,21 @@ argument_specs:
         link: https://github.com/insan3d/tgsmtp
 
     options:
+      tgsmtp_telegram_token:
+        type: str
+        description: Telegram bot token.
+
+      tgsmtp_telegram_chat_id:
+        type: str
+        description: Telegram (group) chat ID.
+
       tgsmtp_telegtam_token:
         type: str
-        required: true
-        description: Telegram bot token.
+        description: Legacy misspelled alias for C(tgsmtp_telegram_token).
 
       tgsmtp_telegtam_chat_id:
         type: str
-        required: true
-        description: Telegram (group) chat ID.
+        description: Legacy misspelled alias for C(tgsmtp_telegram_chat_id).
 
       tgsmtp_format:
         default: pre
@@ -48,13 +54,38 @@ argument_specs:
 
       tgsmtp_alias_path:
         type: path
-        default: /usr/sbin/sendmail
+        default: /usr/local/sbin/tgsmtp-sendmail
         description: Path to install C(sendmail) alias script to.
 
       tgsmtp_alias_unicode:
         type: bool
         default: false
         description: Parse Unicode escapes in input or no.
+
+      tgsmtp_alias_backup:
+        type: bool
+        default: true
+        description: Back up an existing alias script before replacing it.
+
+      tgsmtp_replace_system_sendmail:
+        type: bool
+        default: false
+        description: Allow replacing C(/usr/sbin/sendmail).
+
+      tgsmtp_script_version:
+        type: str
+        default: v1.0.1
+        description: C(tgsmtp) release tag used by the default download URL.
+
+      tgsmtp_script_url:
+        type: str
+        default: https://raw.githubusercontent.com/insan3d/tgsmtp/refs/tags/v1.0.1/tgsmtp.py
+        description: URL to download the C(tgsmtp) script from.
+
+      tgsmtp_script_hash:
+        type: str
+        default: sha512:4b9cca5d15d08b6bb8f4c5a0a6531f2130f6a02e11a6e84b7b896dbf6aaef1b1d3e4ea12699ece370b2c6fee3e29f3b6bf1c5000e53ddd406728af91249b5347
+        description: Checksum for the downloaded C(tgsmtp) script.
 
       tgsmtp_python_executable:
         type: path
@@ -70,3 +101,8 @@ argument_specs:
         type: bool
         default: true
         description: If set to C(true), C(logrotate) config will be installed also.
+
+      tgsmtp_verbose:
+        type: bool
+        default: false
+        description: Run C(tgsmtp) with verbose logging.

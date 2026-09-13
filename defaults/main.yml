@@ -1,12 +1,16 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/ansible/ansible-lint/refs/heads/main/src/ansiblelint/schemas/vars.json
 ---
 tgsmtp_install_path: /usr/local/bin/tgsmtp
-tgsmtp_alias_path: /usr/sbin/sendmail
+tgsmtp_alias_path: /usr/local/sbin/tgsmtp-sendmail
 tgsmtp_alias_unicode: false
+tgsmtp_alias_backup: true
+tgsmtp_replace_system_sendmail: false
 
-tgsmtp_script_url: https://raw.githubusercontent.com/insan3d/tgsmtp/refs/heads/main/tgsmtp.py
-tgsmtp_script_hash: sha512:157cba81dcd1f140310b47acb3bb8c83a0b1e315cc8c9a85b20be121f90a774a16177adc34fd082009431845e3bafd5c5854330db16b933a1ec42d91ce0f4d6b
+tgsmtp_script_version: v1.0.1
+tgsmtp_script_url: "https://raw.githubusercontent.com/insan3d/tgsmtp/refs/tags/{{ tgsmtp_script_version }}/tgsmtp.py"
+tgsmtp_script_hash: sha512:4b9cca5d15d08b6bb8f4c5a0a6531f2130f6a02e11a6e84b7b896dbf6aaef1b1d3e4ea12699ece370b2c6fee3e29f3b6bf1c5000e53ddd406728af91249b5347
 
 tgsmtp_python_executable: /usr/bin/python3
 tgsmtp_log_path: /var/log/tgsmtp.log
 tgsmtp_logrotate_install: true
+tgsmtp_verbose: false

@@ -1,25 +1,36 @@
 #! /usr/bin/env bash
 
-TG_TOKEN="{{ tgsmtp_telegtam_token }}"
-TG_CHAT_ID="{{ tgsmtp_telegtam_chat_id }}"
-TG_FORMAT="{{ tgsmtp_format | default('pre') }}"
-TG_UNICODE="{{ '--unicode' if tgsmtp_alias_unicode else ''}}"
-PYTHON_BIN="{{ tgsmtp_python_executable }}"
-SCRIPT_PATH="{{ tgsmtp_install_path }}"
-LOG_PATH="{{ tgsmtp_log_path }}"
+umask 077
+
+TG_TOKEN={{ (tgsmtp_telegram_token | default(tgsmtp_telegtam_token | default(''))) | quote }}
+TG_CHAT_ID={{ (tgsmtp_telegram_chat_id | default(tgsmtp_telegtam_chat_id | default(''))) | quote }}
+TG_FORMAT={{ (tgsmtp_format | default('pre')) | quote }}
+TG_UNICODE={{ ('--unicode' if tgsmtp_alias_unicode else '') | quote }}
+TG_VERBOSE={{ ('--verbose' if (tgsmtp_verbose | default(false)) else '') | quote }}
+PYTHON_BIN={{ tgsmtp_python_executable | quote }}
+SCRIPT_PATH={{ tgsmtp_install_path | quote }}
+LOG_PATH={{ tgsmtp_log_path | quote }}
 
 SENDER=""
-while getparse=$#; ((getparse > 0)); do
+while (($# > 0)); do
     case "$1" in
-        -f) SENDER="$2"; shift 2 ;;
+        -f)
+            if (($# < 2)); then
+                echo "sendmail: option -f requires an argument" >&2
+                exit 64
+            fi
+            SENDER="$2"
+            shift 2
+            ;;
+        -f*) SENDER="${1#-f}"; shift 1 ;;
         -t|-oi|-oem|-bm) shift 1 ;;
         *) shift 1 ;;
     esac
 done
 
-$PYTHON_BIN "$SCRIPT_PATH" \
-    --token "$TG_TOKEN" \
-    --chat "$TG_CHAT_ID" \
+TGSMTP_TOKEN="$TG_TOKEN" TGSMTP_CHAT_ID="$TG_CHAT_ID" "$PYTHON_BIN" "$SCRIPT_PATH" \
     --format "$TG_FORMAT" \
-    ${SENDER:+--sender "$SENDER"} ${TG_UNICODE} \
-    --verbose >> "$LOG_PATH" 2>&1
+    ${SENDER:+--sender "$SENDER"} \
+    ${TG_UNICODE:+$TG_UNICODE} \
+    ${TG_VERBOSE:+$TG_VERBOSE} \
+    >> "$LOG_PATH" 2>&1

@@ -1,0 +1,10 @@
+---
+- name: Cleanup
+  hosts: all
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Remove Molecule runtime directory
+      ansible.builtin.file:
+        path: /tmp/tgsmtp-molecule
+        state: absent

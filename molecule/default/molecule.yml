@@ -1,0 +1,27 @@
+---
+driver:
+  name: default
+
+platforms:
+  - name: instance
+
+scenario:
+  converge_sequence:
+    - converge
+  test_sequence:
+    - cleanup
+    - syntax
+    - converge
+    - idempotence
+    - verify
+    - cleanup
+
+provisioner:
+  name: ansible
+  inventory:
+    host_vars:
+      instance:
+        ansible_connection: local
+
+verifier:
+  name: ansible

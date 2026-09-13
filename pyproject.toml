@@ -1,0 +1,14 @@
+[project]
+name = "insan3d-tgsmtp-role"
+version = "0.0.0"
+requires-python = ">=3.12"
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "ansible-core>=2.20",
+    "ansible-lint>=6.13",
+    "molecule>=25.0",
+]

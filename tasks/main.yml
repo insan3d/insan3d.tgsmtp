@@ -1,5 +1,83 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/ansible/ansible-lint/refs/heads/main/src/ansiblelint/schemas/tasks.json
 ---
+- name: Validate Telegram settings
+  ansible.builtin.assert:
+    that:
+      - (tgsmtp_telegram_token | default(tgsmtp_telegtam_token | default(''))) | length > 0
+      - (tgsmtp_telegram_chat_id | default(tgsmtp_telegtam_chat_id | default(''))) | length > 0
+    fail_msg: >-
+      Set tgsmtp_telegram_token and tgsmtp_telegram_chat_id.
+      Legacy tgsmtp_telegtam_* variable names are still accepted for compatibility.
+  no_log: true
+
+- name: Validate tgsmtp paths
+  ansible.builtin.assert:
+    that:
+      - tgsmtp_install_path is match('^/[^ \t\r\n]+$')
+      - tgsmtp_alias_path is match('^/[^ \t\r\n]+$')
+      - tgsmtp_log_path is match('^/[^ \t\r\n]+$')
+      - tgsmtp_python_executable is match('^/[^ \t\r\n]+$')
+      - not tgsmtp_install_path.endswith('/')
+      - not tgsmtp_alias_path.endswith('/')
+      - not tgsmtp_log_path.endswith('/')
+      - not tgsmtp_python_executable.endswith('/')
+      - tgsmtp_install_path != tgsmtp_alias_path
+    fail_msg: >-
+      tgsmtp paths must be distinct absolute file paths without whitespace
+      or trailing slashes.
+
+- name: Check Python runtime version
+  ansible.builtin.command:
+    cmd: "{{ tgsmtp_python_executable }} -c 'import sys; print(\"%d.%d\" % sys.version_info[:2])'"
+  register: tgsmtp_python_version
+  changed_when: false
+  check_mode: false
+
+- name: Validate Python runtime version
+  ansible.builtin.assert:
+    that:
+      - >-
+        (tgsmtp_python_version.stdout is match('^[0-9]+\.[0-9]+$')) and
+        (tgsmtp_python_version.stdout is version('3.11', '>='))
+    fail_msg: >-
+      tgsmtp requires Python >= 3.11, but {{ tgsmtp_python_executable }}
+      reported {{ tgsmtp_python_version.stdout | default('unknown') }}.
+
+- name: Refuse to replace system sendmail unless explicitly enabled
+  when:
+    - tgsmtp_alias_path == "/usr/sbin/sendmail"
+    - not tgsmtp_replace_system_sendmail
+  ansible.builtin.fail:
+    msg: >-
+      Refusing to overwrite /usr/sbin/sendmail by default. Set
+      tgsmtp_replace_system_sendmail=true if this host intentionally replaces
+      the system sendmail interface.
+
+- name: Ensure tgsmtp install directories exist
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ tgsmtp_install_path }}"
+    - "{{ tgsmtp_alias_path }}"
+
+- name: Check tgsmtp log directory
+  ansible.builtin.stat:
+    path: "{{ tgsmtp_log_path | dirname }}"
+  register: tgsmtp_log_dir_stat
+
+- name: Ensure tgsmtp log directory exists
+  when: not tgsmtp_log_dir_stat.stat.exists
+  ansible.builtin.file:
+    path: "{{ tgsmtp_log_path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
 - name: Ensure tgsmtp script exists
   ansible.builtin.get_url:
     url: "{{ tgsmtp_script_url }}"
@@ -9,6 +87,16 @@
     mode: "0755"
     checksum: "{{ tgsmtp_script_hash }}"
 
+- name: Ensure tgsmtp log file exists
+  ansible.builtin.file:
+    path: "{{ tgsmtp_log_path }}"
+    state: touch
+    owner: root
+    group: root
+    mode: "0600"
+    access_time: preserve
+    modification_time: preserve
+
 - name: Ensure sendmail wrapper exists
   ansible.builtin.template:
     src: sendmail.j2
@@ -16,6 +104,8 @@
     owner: root
     group: root
     mode: "0700"
+    backup: "{{ tgsmtp_alias_backup }}"
+  no_log: true
 
 - name: Ensure logrotate config exists
   when: tgsmtp_logrotate_install

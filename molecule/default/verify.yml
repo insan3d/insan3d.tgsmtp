@@ -1,0 +1,74 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    tgsmtp_molecule_root: /tmp/tgsmtp-molecule
+    tgsmtp_live_enabled: "{{ lookup('env', 'TGSMTP_LIVE') | default('', true) in ['1', 'true', 'yes'] }}"
+    tgsmtp_live_subject: "tgsmtp molecule unicode smoke"
+  tasks:
+    - name: Stat installed script, wrapper and log
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: tgsmtp_molecule_paths
+      loop:
+        - "{{ tgsmtp_molecule_root }}/bin/tgsmtp"
+        - "{{ tgsmtp_molecule_root }}/sbin/sendmail"
+        - "{{ tgsmtp_molecule_root }}/log/tgsmtp.log"
+
+    - name: Assert installed files exist with safe modes
+      ansible.builtin.assert:
+        that:
+          - tgsmtp_molecule_paths.results[0].stat.exists
+          - tgsmtp_molecule_paths.results[0].stat.mode == '0755'
+          - tgsmtp_molecule_paths.results[1].stat.exists
+          - tgsmtp_molecule_paths.results[1].stat.mode == '0700'
+          - tgsmtp_molecule_paths.results[2].stat.exists
+          - tgsmtp_molecule_paths.results[2].stat.mode == '0600'
+
+    - name: Read sendmail wrapper
+      ansible.builtin.slurp:
+        src: "{{ tgsmtp_molecule_root }}/sbin/sendmail"
+      register: tgsmtp_molecule_wrapper
+      no_log: true
+
+    - name: Assert wrapper does not pass secrets through argv
+      ansible.builtin.assert:
+        that:
+          - "'--token' not in (tgsmtp_molecule_wrapper.content | b64decode)"
+          - "'--chat' not in (tgsmtp_molecule_wrapper.content | b64decode)"
+          - "'TGSMTP_TOKEN=' in (tgsmtp_molecule_wrapper.content | b64decode)"
+          - "'TGSMTP_CHAT_ID=' in (tgsmtp_molecule_wrapper.content | b64decode)"
+
+    - name: Run installed tgsmtp version
+      ansible.builtin.command:
+        cmd: "{{ tgsmtp_molecule_root }}/bin/tgsmtp --version"
+      register: tgsmtp_molecule_version
+      changed_when: false
+
+    - name: Assert installed tgsmtp version
+      ansible.builtin.assert:
+        that:
+          - "'tgsmtp v1.0.1' in tgsmtp_molecule_version.stdout"
+
+    - name: Send live Telegram smoke message
+      when: tgsmtp_live_enabled
+      ansible.builtin.command:
+        cmd: "{{ tgsmtp_molecule_root }}/sbin/sendmail -t"
+        stdin: |
+          From: molecule@localhost
+          Subject: {{ tgsmtp_live_subject }}
+
+          Live Molecule smoke from {{ inventory_hostname }}.
+          Unicode escapes: \U0001f680 \ud83d\ude80 \xF0\x9F\x98\x8E
+          MarkdownV2 noise: _*[]()~`>#+-=|{}.!
+          HTML noise: <b>&</b>
+      register: tgsmtp_molecule_live
+      changed_when: true
+
+    - name: Assert live Telegram smoke succeeded
+      when: tgsmtp_live_enabled
+      ansible.builtin.assert:
+        that:
+          - tgsmtp_molecule_live.rc == 0
